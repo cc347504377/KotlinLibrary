@@ -1,5 +1,3 @@
-import com.luoye.whr.kotlinutil.Test;
-
 /**
  * Created by whr on 9/27/17.
  */

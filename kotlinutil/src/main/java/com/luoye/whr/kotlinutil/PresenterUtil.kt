@@ -62,21 +62,21 @@ class PresenterUtil {
                 if (response.isSuccessful) {
                     try {
                         dealJson(response, callBack)?.let {
-                            log("$connectionName json: \n$it")
+                            log("$connectionName json: \n$it","http")
                             operation(it)
                         }
                     } catch (e: Exception) {
-                        log("$connectionName error:\n$e")
+                        log("$connectionName error:\n$e","http")
                         e.message?.let { callBack.onFailed(it) }
                     }
                 } else {
-                    log("$connectionName error:\n${response.code()} ${response.body()}")
+                    log("$connectionName error:\n${response.code()} ${response.body()}","http")
                     callBack.onFailed(response.code().toString() + "")
                 }
             }
 
             override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                log("$connectionName error:\n$t")
+                log("$connectionName error:\n$t","http")
                 callBack.onFailed("" + t.message)
             }
         })

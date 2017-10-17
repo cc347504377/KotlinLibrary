@@ -8,6 +8,7 @@ import android.support.v7.widget.RecyclerView
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.support.v7.widget.RecyclerView.*
+import android.view.MotionEvent
 import android.view.ViewGroup
 
 /**
@@ -17,34 +18,41 @@ import android.view.ViewGroup
 
 class RefreshRecyclerView constructor(context: Context, attrs: AttributeSet? = null) : SwipeRefreshLayout(context, attrs) {
 
-    val recyclerView: RecyclerView
+    lateinit var recyclerView: MyRecyclerView
     private var currentNum = 0
 
-    init {
-        recyclerView = LayoutInflater.from(context).inflate(R.layout.view_recycler, null) as RecyclerView
-        addView(recyclerView)
+    companion object {
+        interface OnRefreshListener<T> {
+            fun onRefresh(): ArrayList<T>?
+
+            fun onLoad(currentPage: Int): ArrayList<T>?
+        }
     }
+
+//    init {
+//        recyclerView = LayoutInflater.from(context).inflate(R.layout.view_recycler, null) as RecyclerView
+//        addView(recyclerView)
+//    }
 
     //因为manager可能会有别的用处,所以放在外部实现
     fun <T> initRecyclerView(manager: LinearLayoutManager, adapter: BaseAdapter<T>, refreshListener: OnRefreshListener<T>) {
-        setRefreshListener(refreshListener, manager, adapter)
+        initView(manager)
+        setRefreshListener(refreshListener, adapter)
         recyclerView.layoutManager = manager
         recyclerView.adapter = adapter
+        //第一次初始化
+        startRefresh()
+        refresh(refreshListener.onRefresh(), adapter)
     }
 
-    private fun <T> setRefreshListener(refreshListener: OnRefreshListener<T>, manager: LinearLayoutManager, adapter: BaseAdapter<T>) {
+    private fun initView(manager: LinearLayoutManager) {
+        recyclerView = MyRecyclerView(context, manager)
+        addView(recyclerView)
+    }
+
+    private fun <T> setRefreshListener(refreshListener: OnRefreshListener<T>, adapter: BaseAdapter<T>) {
         setOnRefreshListener { refresh(refreshListener.onRefresh(), adapter) }
-        recyclerView.addOnScrollListener(object : EndlessRecyclerOnScrollListener(manager) {
-            override fun onLoadMore(currentPage: Int) {
-                load(refreshListener.onLoad(currentPage), adapter)
-            }
-        })
-    }
-
-    interface OnRefreshListener<T> {
-        fun onRefresh(): ArrayList<T>?
-
-        fun onLoad(currentPage: Int): ArrayList<T>?
+        recyclerView.loadListener = { load(refreshListener.onLoad(currentNum), adapter) }
     }
 
     /**
@@ -76,12 +84,10 @@ class RefreshRecyclerView constructor(context: Context, attrs: AttributeSet? = n
     private fun <T> load(data: ArrayList<T>?, adapter: BaseAdapter<T>) {
         data?.let {
             adapter.let {
-                var lastNum = 0
                 val aData = it.data
                 val size = data.size
-                aData.clear()
                 if (size > 0) {
-                    lastNum = currentNum
+                    val lastNum = currentNum
                     currentNum += size
                     aData.addAll(data)
                     it.notifyItemChanged(lastNum, size)
@@ -99,74 +105,87 @@ class RefreshRecyclerView constructor(context: Context, attrs: AttributeSet? = n
     private fun stopRefresh() {
         post { isRefreshing = false }
     }
-}
 
-/**
- * Created by whr on 17-3-31.
- * RecyclerView滑动事件处理
- */
+    /**
+     * 滑动事件处理
+     */
+    inner class MyRecyclerView(context: Context, val manager: LinearLayoutManager) : RecyclerView(context) {
 
-abstract class EndlessRecyclerOnScrollListener(private val mLinearLayoutManager: LinearLayoutManager) : RecyclerView.OnScrollListener() {
+        var down: Float = 0f
+        var scrollUp = false
+        //上拉加载监听
+        var loadListener: ((currentPage: Int) -> Unit)? = null
 
-    private var previousTotal = 0
-    private var loading = true
-    private var currentPage = 1
-    private var totalTime: Long = 0
-
-    override fun onScrolled(recyclerView: RecyclerView?, dx: Int, dy: Int) {
-        super.onScrolled(recyclerView, dx, dy)
-    }
-
-    override fun onScrollStateChanged(recyclerView: RecyclerView?, newState: Int) {
-        super.onScrollStateChanged(recyclerView, newState)
-        val visibleItemCount = recyclerView!!.childCount
-        val totalItemCount = mLinearLayoutManager.itemCount
-        val firstVisibleItem = mLinearLayoutManager.findFirstVisibleItemPosition()
-
-        when (newState) {
-            SCROLL_STATE_IDLE // The RecyclerView is not currently scrolling.
-            ->
-                log("scroll_stop")
-//                //当屏幕停止滚动，加载图片
-//                Glide.with(MyApplication.context).resumeRequests()
-            SCROLL_STATE_DRAGGING // The RecyclerView is currently being dragged by outside input such as user touch input.
-            ->
-                log("scroll_touch")
-//                //当屏幕滚动且用户使用的触碰或手指还在屏幕上，停止加载图片
-//                Glide.with(MyApplication.context).pauseRequests()
-            SCROLL_STATE_SETTLING // The RecyclerView is currently animating to a final position while not under outside control.
-            ->
-                log("scroll_ing")
-//                //由于用户的操作，屏幕产生惯性滑动，恢复加载图片
-//                Glide.with(MyApplication.context).resumeRequests()
+        init {
+            addOnScrollListener(EndlessRecyclerOnScrollListener())
         }
 
-        //保证每次数据修改后只会刷新执行一次
-        if (loading) {
-            if (totalItemCount != previousTotal) {
-                loading = false
-                previousTotal = totalItemCount
+        override fun onTouchEvent(e: MotionEvent?): Boolean {
+            when (e!!.action) {
+                MotionEvent.ACTION_DOWN -> down = e.y
+                MotionEvent.ACTION_UP -> scrollUp = down - e.y > 0
+            }
+            return super.onTouchEvent(e)
+        }
+
+        inner class EndlessRecyclerOnScrollListener : RecyclerView.OnScrollListener() {
+
+            private var previousTotal = 0
+            private var loading = true
+            private var totalTime: Long = 0
+            //加载次数(页数)
+            private var currentPage = 1
+
+            override fun onScrollStateChanged(recyclerView: RecyclerView?, newState: Int) {
+                super.onScrollStateChanged(recyclerView, newState)
+                val visibleItemCount = recyclerView!!.childCount
+                val totalItemCount = manager.itemCount
+                val firstVisibleItem = manager.findFirstVisibleItemPosition()
+//                when (newState) {
+//                    SCROLL_STATE_IDLE // The RecyclerView is not currently scrolling.
+//                    ->
+//                        log("scroll_stop")
+////                //当屏幕停止滚动，加载图片
+////                Glide.with(MyApplication.context).resumeRequests()
+//                    SCROLL_STATE_DRAGGING // The RecyclerView is currently being dragged by outside input such as user touch input.
+//                    ->
+//                        log("scroll_touch")
+////                //当屏幕滚动且用户使用的触碰或手指还在屏幕上，停止加载图片
+////                Glide.with(MyApplication.context).pauseRequests()
+//                    SCROLL_STATE_SETTLING // The RecyclerView is currently animating to a final position while not under outside control.
+//                    ->
+//                        log("scroll_ing")
+////                //由于用户的操作，屏幕产生惯性滑动，恢复加载图片
+////                Glide.with(MyApplication.context).resumeRequests()
+//                }
+                //保证每次数据修改后只会刷新执行一次
+                if (loading) {
+                    if (totalItemCount != previousTotal) {
+                        loading = false
+                        previousTotal = totalItemCount
+                    }
+                }
+                if (!loading //已经执行过之前的判断
+                        && totalItemCount - visibleItemCount <= firstVisibleItem  //判断当滑到底部
+                        && newState == 1                                            //判断到底后再次滑动
+                        && scrollUp
+                        && System.currentTimeMillis() - totalTime > 1000            //每次执行最小间隔为1s
+                        ) {
+                    totalTime = System.currentTimeMillis()
+                    currentPage++
+                    loading = true
+                    loadListener?.invoke(currentPage)
+                }
             }
         }
-        if (!loading //已经执行过之前的判断
-                && totalItemCount - visibleItemCount <= firstVisibleItem  //判断当滑到底部
-                && newState == 1                                            //判断到底后再次滑动
-                && System.currentTimeMillis() - totalTime > 1000            //每次执行最小间隔为1s
-                ) {
-            totalTime = System.currentTimeMillis()
-            currentPage++
-            onLoadMore(currentPage)
-            loading = true
-        }
     }
-
-    abstract fun onLoadMore(currentPage: Int)
 }
+
 
 abstract class BaseAdapter<T>(private val context: Context, val data: ArrayList<T>, @LayoutRes private val layoutRes: Int) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     override fun getItemCount() = data.size
 
-    private fun getView(parent: ViewGroup?) = LayoutInflater.from(context).inflate(layoutRes, parent, false)
+    protected fun getView(parent: ViewGroup?) = LayoutInflater.from(context).inflate(layoutRes, parent, false)!!
 
 }

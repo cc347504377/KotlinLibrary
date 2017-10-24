@@ -18,7 +18,7 @@ import android.view.ViewGroup
 
 class RefreshRecyclerView constructor(context: Context, attrs: AttributeSet? = null) : SwipeRefreshLayout(context, attrs) {
 
-    lateinit var recyclerView: MyRecyclerView
+    var recyclerView: MyRecyclerView
     private var currentNum = 0
 
     companion object {
@@ -29,25 +29,20 @@ class RefreshRecyclerView constructor(context: Context, attrs: AttributeSet? = n
         }
     }
 
-//    init {
-//        recyclerView = LayoutInflater.from(context).inflate(R.layout.view_recycler, null) as RecyclerView
-//        addView(recyclerView)
-//    }
+    init {
+        recyclerView = LayoutInflater.from(context).inflate(R.layout.view_recycler, null) as MyRecyclerView
+        addView(recyclerView)
+    }
 
     //因为manager可能会有别的用处,所以放在外部实现
     fun <T> initRecyclerView(manager: LinearLayoutManager, adapter: BaseAdapter<T>, refreshListener: OnRefreshListener<T>) {
-        initView(manager)
+        recyclerView.manager = manager
         setRefreshListener(refreshListener, adapter)
         recyclerView.layoutManager = manager
         recyclerView.adapter = adapter
         //第一次初始化
         startRefresh()
         refresh(refreshListener.onRefresh(), adapter)
-    }
-
-    private fun initView(manager: LinearLayoutManager) {
-        recyclerView = MyRecyclerView(context, manager)
-        addView(recyclerView)
     }
 
     private fun <T> setRefreshListener(refreshListener: OnRefreshListener<T>, adapter: BaseAdapter<T>) {
@@ -105,42 +100,48 @@ class RefreshRecyclerView constructor(context: Context, attrs: AttributeSet? = n
     private fun stopRefresh() {
         post { isRefreshing = false }
     }
+}
 
-    /**
-     * 滑动事件处理
-     */
-    inner class MyRecyclerView(context: Context, val manager: LinearLayoutManager) : RecyclerView(context) {
+/**
+ * 滑动事件处理
+ */
+class MyRecyclerView : RecyclerView {
+    constructor(context: Context) : super(context, null)
+    constructor(context: Context, attrs: AttributeSet) : super(context, attrs, 0)
+    constructor(context: Context, attrs: AttributeSet, defStyle: Int) : super(context, attrs, defStyle)
 
-        var down: Float = 0f
-        var scrollUp = false
-        //上拉加载监听
-        var loadListener: ((currentPage: Int) -> Unit)? = null
+    private var down: Float = 0f
+    private var scrollUp = false
+    //LinearLayoutManager
+    lateinit var manager: LinearLayoutManager
+    //上拉加载监听
+    var loadListener: ((currentPage: Int) -> Unit)? = null
 
-        init {
-            addOnScrollListener(EndlessRecyclerOnScrollListener())
+    init {
+        addOnScrollListener(EndlessRecyclerOnScrollListener())
+    }
+
+    override fun onTouchEvent(e: MotionEvent?): Boolean {
+        when (e!!.action) {
+            MotionEvent.ACTION_DOWN -> down = e.y
+            MotionEvent.ACTION_UP -> scrollUp = down - e.y > 0
         }
+        return super.onTouchEvent(e)
+    }
 
-        override fun onTouchEvent(e: MotionEvent?): Boolean {
-            when (e!!.action) {
-                MotionEvent.ACTION_DOWN -> down = e.y
-                MotionEvent.ACTION_UP -> scrollUp = down - e.y > 0
-            }
-            return super.onTouchEvent(e)
-        }
+    private inner class EndlessRecyclerOnScrollListener : RecyclerView.OnScrollListener() {
 
-        inner class EndlessRecyclerOnScrollListener : RecyclerView.OnScrollListener() {
+        private var previousTotal = 0
+        private var loading = true
+        private var totalTime: Long = 0
+        //加载次数(页数)
+        private var currentPage = 1
 
-            private var previousTotal = 0
-            private var loading = true
-            private var totalTime: Long = 0
-            //加载次数(页数)
-            private var currentPage = 1
-
-            override fun onScrollStateChanged(recyclerView: RecyclerView?, newState: Int) {
-                super.onScrollStateChanged(recyclerView, newState)
-                val visibleItemCount = recyclerView!!.childCount
-                val totalItemCount = manager.itemCount
-                val firstVisibleItem = manager.findFirstVisibleItemPosition()
+        override fun onScrollStateChanged(recyclerView: RecyclerView?, newState: Int) {
+            super.onScrollStateChanged(recyclerView, newState)
+            val visibleItemCount = recyclerView!!.childCount
+            val totalItemCount = manager.itemCount
+            val firstVisibleItem = manager.findFirstVisibleItemPosition()
 //                when (newState) {
 //                    SCROLL_STATE_IDLE // The RecyclerView is not currently scrolling.
 //                    ->
@@ -158,29 +159,27 @@ class RefreshRecyclerView constructor(context: Context, attrs: AttributeSet? = n
 ////                //由于用户的操作，屏幕产生惯性滑动，恢复加载图片
 ////                Glide.with(MyApplication.context).resumeRequests()
 //                }
-                //保证每次数据修改后只会刷新执行一次
-                if (loading) {
-                    if (totalItemCount != previousTotal) {
-                        loading = false
-                        previousTotal = totalItemCount
-                    }
+            //保证每次数据修改后只会刷新执行一次
+            if (loading) {
+                if (totalItemCount != previousTotal) {
+                    loading = false
+                    previousTotal = totalItemCount
                 }
-                if (!loading //已经执行过之前的判断
-                        && totalItemCount - visibleItemCount <= firstVisibleItem  //判断当滑到底部
-                        && newState == 1                                            //判断到底后再次滑动
-                        && scrollUp
-                        && System.currentTimeMillis() - totalTime > 1000            //每次执行最小间隔为1s
-                        ) {
-                    totalTime = System.currentTimeMillis()
-                    currentPage++
-                    loading = true
-                    loadListener?.invoke(currentPage)
-                }
+            }
+            if (!loading //已经执行过之前的判断
+                    && totalItemCount - visibleItemCount <= firstVisibleItem  //判断当滑到底部
+                    && newState == 1                                            //判断到底后再次滑动
+                    && scrollUp
+                    && System.currentTimeMillis() - totalTime > 1000            //每次执行最小间隔为1s
+                    ) {
+                totalTime = System.currentTimeMillis()
+                currentPage++
+                loading = true
+                loadListener?.invoke(currentPage)
             }
         }
     }
 }
-
 
 abstract class BaseAdapter<T>(private val context: Context, val data: ArrayList<T>, @LayoutRes private val layoutRes: Int) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 

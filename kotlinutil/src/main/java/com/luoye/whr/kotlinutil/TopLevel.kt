@@ -44,6 +44,13 @@ fun log(msg: String, tag: String = "TAG") = stat.isTue {
     }
 }
 
+inline fun timer(delay: Long, crossinline operation: () -> Unit) {
+    Timer().schedule(object : TimerTask() {
+        override fun run() {
+            operation()
+        }
+    }, delay)
+}
 
 inline fun Boolean.isTue(operation: () -> Unit) {
     if (this) {

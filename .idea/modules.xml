@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/MyLibrary.iml" filepath="$PROJECT_DIR$/MyLibrary.iml" />
+      <module fileurl="file://$PROJECT_DIR$/KotlinLibrary.iml" filepath="$PROJECT_DIR$/KotlinLibrary.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/kotlinutil/kotlinutil.iml" filepath="$PROJECT_DIR$/kotlinutil/kotlinutil.iml" />
     </modules>

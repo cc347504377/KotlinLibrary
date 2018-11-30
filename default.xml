@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2018 贵阳货车帮科技有限公司 -->
+
+<manifest>
+  <remote  name="origin"
+           fetch="https://github.com/cc347504377/" />
+
+  <default revision="master"
+           remote="origin"
+           sync-j="4" />
+
+  <project path="KotlinLibrary" name="KotlinLibrary" revision="master">
+    <copyfile src="BuildScript/build.gradle" dest="findbugs.gradle" />
+  </project>
+
+</manifest>

@@ -1,15 +1,14 @@
-package com.luoye.whr.kotlinutil
+package com.luoye.whr.kotlinutil.view
 
 import android.content.Context
-import android.support.annotation.LayoutRes
 import android.support.v4.widget.SwipeRefreshLayout
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.util.AttributeSet
 import android.view.LayoutInflater
-import android.support.v7.widget.RecyclerView.*
 import android.view.MotionEvent
-import android.view.ViewGroup
+import com.luoye.whr.kotlinutil.R
+import com.luoye.whr.kotlinutil.base.BaseAdapter
 
 /**
  * Created by whr on 17-3-13.
@@ -18,15 +17,13 @@ import android.view.ViewGroup
 
 class RefreshRecyclerView constructor(context: Context, attrs: AttributeSet? = null) : SwipeRefreshLayout(context, attrs) {
 
-    var recyclerView: MyRecyclerView
+    val recyclerView: MyRecyclerView
     private var currentNum = 0
 
-    companion object {
-        interface OnRefreshListener<T> {
-            fun onRefresh(): ArrayList<T>?
+    interface OnDataChangeListener<T> {
+        fun onRefresh(dataChanged: (MutableList<T>) -> Unit)
 
-            fun onLoad(currentPage: Int): ArrayList<T>?
-        }
+        fun onLoad(currentPage: Int, operation: (MutableList<T>) -> Unit)
     }
 
     init {
@@ -35,19 +32,19 @@ class RefreshRecyclerView constructor(context: Context, attrs: AttributeSet? = n
     }
 
     //因为manager可能会有别的用处,所以放在外部实现
-    fun <T> initRecyclerView(manager: LinearLayoutManager, adapter: BaseAdapter<T>, refreshListener: OnRefreshListener<T>) {
+    fun <T> initRecyclerView(manager: LinearLayoutManager, adapter: BaseAdapter<T>, refreshListener: OnDataChangeListener<T>) {
         recyclerView.manager = manager
         setRefreshListener(refreshListener, adapter)
         recyclerView.layoutManager = manager
         recyclerView.adapter = adapter
         //第一次初始化
         startRefresh()
-        refresh(refreshListener.onRefresh(), adapter)
+//        refresh(refreshListener.onRefresh(), adapter)
     }
 
-    private fun <T> setRefreshListener(refreshListener: OnRefreshListener<T>, adapter: BaseAdapter<T>) {
-        setOnRefreshListener { refresh(refreshListener.onRefresh(), adapter) }
-        recyclerView.loadListener = { load(refreshListener.onLoad(currentNum), adapter) }
+    private fun <T> setRefreshListener(refreshListener: OnDataChangeListener<T>, adapter: BaseAdapter<T>) {
+//        setOnRefreshListener { refresh(refreshListener.onRefresh(), adapter) }
+//        recyclerView.loadListener = { load(refreshListener.onLoad(currentNum), adapter) }
     }
 
     /**
@@ -103,7 +100,7 @@ class RefreshRecyclerView constructor(context: Context, attrs: AttributeSet? = n
 }
 
 /**
- * 滑动事件处理
+ * 处理了滑动事件
  */
 class MyRecyclerView : RecyclerView {
     constructor(context: Context) : super(context, null)
@@ -119,6 +116,11 @@ class MyRecyclerView : RecyclerView {
 
     init {
         addOnScrollListener(EndlessRecyclerOnScrollListener())
+    }
+
+    override fun setLayoutManager(layout: LayoutManager?) {
+        super.setLayoutManager(layout)
+        manager = layout as LinearLayoutManager
     }
 
     override fun onTouchEvent(e: MotionEvent?): Boolean {
@@ -137,9 +139,9 @@ class MyRecyclerView : RecyclerView {
         //加载次数(页数)
         private var currentPage = 1
 
-        override fun onScrollStateChanged(recyclerView: RecyclerView?, newState: Int) {
+        override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
             super.onScrollStateChanged(recyclerView, newState)
-            val visibleItemCount = recyclerView!!.childCount
+            val visibleItemCount = recyclerView.childCount
             val totalItemCount = manager.itemCount
             val firstVisibleItem = manager.findFirstVisibleItemPosition()
 //                when (newState) {
@@ -181,10 +183,3 @@ class MyRecyclerView : RecyclerView {
     }
 }
 
-abstract class BaseAdapter<T>(private val context: Context, val data: ArrayList<T>, @LayoutRes private val layoutRes: Int) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
-
-    override fun getItemCount() = data.size
-
-    protected fun getView(parent: ViewGroup?) = LayoutInflater.from(context).inflate(layoutRes, parent, false)!!
-
-}

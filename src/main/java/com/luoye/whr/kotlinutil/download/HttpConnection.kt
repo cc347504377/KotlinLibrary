@@ -1,32 +1,41 @@
-package com.luoye.whr.kotlinutil
+package com.luoye.whr.kotlinutil.download
 
+import com.luoye.whr.kotlinutil.util.log
 import java.io.*
 import java.net.HttpURLConnection
 import java.net.URL
 
 /**
  * Created by whr on 9/5/17.
+ * 该类所有方法以及回调都没有指定线程，请按照需求自行实现
  */
-class HttpConnection(url: String) {
+class HttpConnection(url: String, timeout: Int = 10 * 1000, private val bufferSize: Int = 2048) {
 
     private val connection: HttpURLConnection = URL(url).openConnection() as HttpURLConnection
 
     init {
         with(connection) {
             //传输数据的超时时间
-            readTimeout = 2 * 60 * 1000
+            readTimeout = timeout
             //建立连接的超时时间
-            connectTimeout = 10 * 1000
+            connectTimeout = timeout
             //关闭默认缓存
             setChunkedStreamingMode(0)
         }
     }
 
-    fun setHeaders(vararg header: Pair<String, String>) =
+    fun setHeaders(header: Map<String, String>) =
             with(connection) {
                 for ((key, value) in header) {
                     setRequestProperty(key, value)
                 }
+                this@HttpConnection
+            }
+
+    fun setHeaders(header: Pair<String, String>) =
+            with(connection) {
+                setRequestProperty(header.first, header.second)
+                this@HttpConnection
             }
 
     fun getLength() = with(connection) {
@@ -57,7 +66,7 @@ class HttpConnection(url: String) {
     private fun connect(callback: RequestCallback, operation: () -> Unit) =
             with(connection) {
                 try {
-                    kotlin.run(operation)
+                    operation.invoke()
                 } catch (e: Exception) {
                     when (e) {
                         is InterruptedIOException -> log("停止线程")
@@ -84,7 +93,7 @@ class HttpConnection(url: String) {
                 requestMethod = "POST"
                 val stream = connection.outputStream
                 val outputStream = BufferedOutputStream(stream)
-                val b = ByteArray(2048)
+                val b = ByteArray(bufferSize)
                 var read = accessFile.read(b, 0, b.size)
                 var readLength = read
                 while (read != -1) {
@@ -124,25 +133,30 @@ class HttpConnection(url: String) {
                 }
             }
 
-    fun downloadFile(file: File, seek: Long, blockLength: Int, callback: RequestCallback) {
+    fun downloadFile(file: File, seek: Long, callback: RequestCallback) {
         connect(callback) {
+            callback.onDownloadStart()
             with(connection) {
                 requestMethod = "GET"
                 if (responseCode == 206 || responseCode == 200) {
                     val bis = BufferedInputStream(inputStream)
                     val randomFile = RandomAccessFile(file, "rw")
+                    val contentLength = contentLength
                     randomFile.seek(seek)
-                    val b = ByteArray(2048)
+                    val b = ByteArray(bufferSize)
                     var length = 0
                     var read = bis.read(b)
                     while (read != -1) {
+                        Thread.sleep(1)
                         randomFile.write(b, 0, read)
                         length += read
                         read = bis.read(b)
+                        val progress = (length / contentLength.toFloat() * 100).toInt()
+                        callback.onProgress(progress)
                     }
                     bis.close()
                     randomFile.close()
-                    callback.onSuccess("")
+                    callback.onSuccess(file.absolutePath)
                 } else {
                     val reader = BufferedReader(InputStreamReader(errorStream))
                     var str = reader.readLine()
@@ -154,7 +168,6 @@ class HttpConnection(url: String) {
                     reader.close()
                     //请求失败
                     callback.onQuestFailed(responseCode, response.toString())
-                    log("seek: $seek")
                 }
             }
         }
@@ -165,6 +178,7 @@ class HttpConnection(url: String) {
      */
     private fun parseResponse(callback: RequestCallback) =
             with(connection) {
+                callback.onDownloadStart()
                 if (responseCode != 200) {
                     val reader = BufferedReader(InputStreamReader(errorStream))
                     var str = reader.readLine()
@@ -194,9 +208,13 @@ class HttpConnection(url: String) {
 }
 
 interface RequestCallback {
+    fun onDownloadStart()
+
     fun onSuccess(body: String)
 
     fun onConnectFailed(msg: String)
 
     fun onQuestFailed(code: Int, msg: String)
+
+    fun onProgress(progress: Int)
 }

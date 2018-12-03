@@ -1,4 +1,4 @@
-package com.luoye.whr.kotlinutil
+package com.luoye.whr.kotlinutil.base
 
 import android.Manifest
 import android.app.AlertDialog
@@ -9,6 +9,8 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
+import com.luoye.whr.kotlinutil.util.timer
+import com.luoye.whr.kotlinutil.util.toast
 
 
 /**
@@ -17,10 +19,25 @@ import android.support.v4.content.ContextCompat
 
 abstract class PermissionBaseActivity : AppCompatActivity() {
 
-    private val PERMISSION_REQUEST_CODE = 1
-    private val permissions = arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION)
-    private val REQUEST_CODE = 0x11
+    companion object {
+        private val PERMISSION_REQUEST_CODE = 1
+        private val REQUEST_CODE = 0x11
+    }
+    protected abstract var permissions: Array<String>
     private var dialog: AlertDialog? = null
+    //返回键次数
+    private var backPress = 0
+
+    override fun onBackPressed() {
+        backPress++
+        if (backPress == 1) {
+            toast("再按一次退出")
+            timer(1000) { backPress = 0 }
+        }
+        if (backPress == 2) {
+            finish()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

@@ -7,7 +7,7 @@
   repo init
   repo init -u https://github.com/cc347504377/KotlinLibrary.git
   repo sync
-  repo start master -all
+  repo start master --all
 ```
 为了统一项目sdk等版本号，在BuildScript中统一进行管理。如不需要，可自行删除`default.xml`中的
 ```

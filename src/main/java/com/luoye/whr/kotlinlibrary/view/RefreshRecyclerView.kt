@@ -1,4 +1,4 @@
-package com.luoye.whr.kotlinutil.view
+package com.luoye.whr.kotlinlibrary.view
 
 import android.content.Context
 import android.support.v4.widget.SwipeRefreshLayout
@@ -7,8 +7,8 @@ import android.support.v7.widget.RecyclerView
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.MotionEvent
-import com.luoye.whr.kotlinutil.R
-import com.luoye.whr.kotlinutil.base.BaseAdapter
+import com.luoye.whr.kotlinlibrary.R
+import com.luoye.whr.kotlinlibrary.base.BaseAdapter
 
 /**
  * Created by whr on 17-3-13.

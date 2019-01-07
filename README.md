@@ -4,7 +4,6 @@
 ## 集成方式
 基于repo进行管理，在主工程根目录下执行以下代码即可：
 ```
-  repo init
   repo init -u https://github.com/cc347504377/KotlinLibrary.git
   repo sync
   repo start master --all

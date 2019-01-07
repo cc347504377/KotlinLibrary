@@ -1,4 +1,4 @@
-package com.luoye.whr.kotlinutil;
+package com.luoye.whr.kotlinlibrary;
 
 import org.junit.Test;
 

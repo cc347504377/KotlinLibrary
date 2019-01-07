@@ -1,4 +1,4 @@
-package com.luoye.whr.kotlinutil.util
+package com.luoye.whr.kotlinlibrary.util
 
 import android.app.Activity
 import android.webkit.WebSettings
@@ -7,7 +7,6 @@ import android.webkit.WebChromeClient
 import android.content.Intent
 import android.net.Uri
 import android.view.View
-import android.webkit.DownloadListener
 import android.webkit.WebViewClient
 import android.widget.ProgressBar
 

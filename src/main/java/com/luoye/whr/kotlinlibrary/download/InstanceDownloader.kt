@@ -1,14 +1,11 @@
-package com.luoye.whr.kotlinutil.download
+package com.luoye.whr.kotlinlibrary.download
 
-import android.os.Handler
 import android.os.Looper
-import android.os.Message
-import com.luoye.whr.kotlinutil.util.createFile
+import com.luoye.whr.kotlinlibrary.util.createFile
 import org.jetbrains.anko.doAsync
 import java.io.File
 import java.io.RandomAccessFile
 import java.util.*
-import java.util.concurrent.Executors
 
 
 class InstanceDownloader(private val url: String, private val folder: String,

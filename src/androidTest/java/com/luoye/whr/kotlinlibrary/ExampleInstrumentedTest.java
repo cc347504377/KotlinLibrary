@@ -1,4 +1,4 @@
-package com.luoye.whr.kotlinutil;
+package com.luoye.whr.kotlinlibrary;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;

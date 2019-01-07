@@ -1,6 +1,5 @@
-package com.luoye.whr.kotlinutil.base
+package com.luoye.whr.kotlinlibrary.base
 
-import android.Manifest
 import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
@@ -9,8 +8,8 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
-import com.luoye.whr.kotlinutil.util.timer
-import com.luoye.whr.kotlinutil.util.toast
+import com.luoye.whr.kotlinlibrary.util.timer
+import com.luoye.whr.kotlinlibrary.util.toast
 
 
 /**

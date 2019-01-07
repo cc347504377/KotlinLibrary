@@ -1,4 +1,4 @@
-package com.luoye.whr.kotlinutil.view;
+package com.luoye.whr.kotlinlibrary.view;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
@@ -9,7 +9,6 @@ import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
-import android.widget.ImageView;
 
 import java.util.ArrayList;
 import java.util.LinkedList;

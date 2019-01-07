@@ -1,4 +1,4 @@
-package com.luoye.whr.kotlinutil.base
+package com.luoye.whr.kotlinlibrary.base
 
 import android.content.Context
 import android.support.annotation.LayoutRes

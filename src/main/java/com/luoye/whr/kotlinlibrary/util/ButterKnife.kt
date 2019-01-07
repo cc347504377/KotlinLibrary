@@ -1,4 +1,4 @@
-package com.luoye.whr.kotlinutil.util
+package com.luoye.whr.kotlinlibrary.util
 
 import android.app.Activity
 import android.app.Dialog

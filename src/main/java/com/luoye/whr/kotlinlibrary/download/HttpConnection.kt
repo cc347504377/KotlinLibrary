@@ -1,6 +1,6 @@
-package com.luoye.whr.kotlinutil.download
+package com.luoye.whr.kotlinlibrary.download
 
-import com.luoye.whr.kotlinutil.util.log
+import com.luoye.whr.kotlinlibrary.util.log
 import java.io.*
 import java.net.HttpURLConnection
 import java.net.URL

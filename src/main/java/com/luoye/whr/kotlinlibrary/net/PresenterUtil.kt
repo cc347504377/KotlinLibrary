@@ -1,9 +1,9 @@
-package com.luoye.whr.kotlinutil.net
+package com.luoye.whr.kotlinlibrary.net
 
 import android.content.ContextWrapper
 import android.os.Handler
 import com.google.gson.GsonBuilder
-import com.luoye.whr.kotlinutil.util.log
+import com.luoye.whr.kotlinlibrary.util.log
 import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Callback

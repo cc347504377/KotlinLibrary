@@ -1,8 +1,7 @@
-package com.luoye.whr.kotlinutil.download
+package com.luoye.whr.kotlinlibrary.download
 
-import android.os.Handler
 import android.os.Looper
-import com.luoye.whr.kotlinutil.util.fileName
+import com.luoye.whr.kotlinlibrary.util.fileName
 import java.util.*
 
 /**

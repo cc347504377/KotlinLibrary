@@ -5,6 +5,7 @@ import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Color
 import android.os.Build
+import android.support.annotation.ColorInt
 import android.support.v7.widget.RecyclerView
 import android.util.AttributeSet
 import android.view.*
@@ -65,12 +66,16 @@ class PullLayout : FrameLayout {
     private var hoverUp = 0
     //头偏移量
     private var topOffset = 0f
+    //颜色
+    private var bgColor = 0
+    private var listColor = 0
+    private var textColor = 0
 
     init {
         initDp()
         iniEvent()
-        setBackgroundColor(Color.parseColor("#91dfdfdf"))
-        recyclerView = (LayoutInflater.from(context).inflate(R.layout.view_recycler, null) as RecyclerView)
+        initColor()
+        recyclerView = (LayoutInflater.from(context).inflate(R.layout.view_recycler_scrollbar, null) as RecyclerView)
                 .apply {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                         this.elevation = elevate
@@ -102,7 +107,6 @@ class PullLayout : FrameLayout {
                 this.setMargins(0, this@PullLayout.bottomMargin, 0, this@PullLayout.bottomMargin)
             }
             this.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, bottomViewSize)
-            this.setTextColor(Color.parseColor("#999999"))
             this.text = "加载更多"
             post {
                 hoverDown = measuredHeight + bottomMargin * 2
@@ -111,6 +115,13 @@ class PullLayout : FrameLayout {
         addView(topView)
         addView(bottomView)
         addView(recyclerView)
+        setColors()
+    }
+
+    private fun initColor() {
+        bgColor = resources.getColor(R.color.colorListBg, null)
+        listColor = Color.WHITE
+        textColor = resources.getColor(R.color.colorListTv, null)
     }
 
     /**
@@ -149,6 +160,13 @@ class PullLayout : FrameLayout {
     fun onError(msg: String?) {
         bottomView.text = msg
         resetView()
+    }
+
+    fun setColors(@ColorInt bgColor: Int = this.bgColor, @ColorInt listColor: Int = this.listColor,
+                  @ColorInt textColor: Int = this.textColor) {
+        setBackgroundColor(bgColor)
+        recyclerView.setBackgroundColor(listColor)
+        bottomView.setTextColor(textColor)
     }
 
     /**

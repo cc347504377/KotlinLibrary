@@ -12,7 +12,7 @@
   <project path="kotlinLibrary" name="kotlinLibrary" revision="master">
     <copyfile src="BuildScript/build.gradle" dest="build.gradle" />
     <!-- <copyfile src="BuildScript/build_app.gradle" dest="app/build.gradle" /> -->
-    <copyfile src="BuildScript/.gitignore" dest=".gitignore" />
+    <!--<copyfile src="BuildScript/.gitignore" dest=".gitignore" />-->
   </project>
 
 </manifest>

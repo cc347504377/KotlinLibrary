@@ -119,9 +119,9 @@ class PullLayout : FrameLayout {
     }
 
     private fun initColor() {
-        bgColor = resources.getColor(R.color.colorListBg, null)
+        bgColor = resources.getColor(R.color.colorListBg)
         listColor = Color.WHITE
-        textColor = resources.getColor(R.color.colorListTv, null)
+        textColor = resources.getColor(R.color.colorListTv)
     }
 
     /**

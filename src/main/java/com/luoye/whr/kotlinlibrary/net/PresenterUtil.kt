@@ -18,7 +18,6 @@ import java.util.concurrent.Executors
  * 基于Retrofit
  * presenter工具类
  */
-
 object PresenterUtil {
     const val TAG = "net"
     val threadPool = Executors.newSingleThreadExecutor()!!
@@ -109,6 +108,7 @@ object PresenterUtil {
             }
 
             override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                t.printStackTrace()
                 log("$connectionName Connect error:\n$t", TAG)
                 callBack.onFailed("" + t.message)
             }
